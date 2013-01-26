@@ -1,0 +1,21 @@
+import requests
+import tablib
+import re
+from bs4 import BeautifulSoup
+
+root_url = 'http://scores.espn.go.com/nhl/scoreboard?date='
+
+dates = {'jan': {'start': '20130126', 'end': '20130131'},
+         'feb': {'start': '20130201', 'end': '20130228'},
+         'mar': {'start': '20130301', 'end': '20130331'},
+         'apr': {'start': '20130401', 'end': '20130427'}}
+
+first_url = 'http://scores.espn.go.com/nhl/scoreboard?date=20130126'
+
+r = requests.get(first_url)
+
+soup = BeautifulSoup(r.text, 'html5lib')
+
+find_games = soup.find_all(id=re.compile('gamebox'))
+
+

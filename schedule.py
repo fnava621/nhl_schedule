@@ -10,11 +10,10 @@ data.headers = ['game date', 'away', 'home', 'game time', 'espn id']
 
 root_url = 'http://scores.espn.go.com/nhl/scoreboard?date='
 
-month_schedule = {'jan': {'start': 20130126, 'end': 20130132},
+month_schedule = {'jan': {'start': 20130119, 'end': 20130132},
                   'feb': {'start': 20130201, 'end': 20130229},
                   'mar': {'start': 20130301, 'end': 20130333},
                   'apr': {'start': 20130401, 'end': 20130428}}
-
 
 def games_for_day(soup):
     return soup.find_all(id=re.compile('gamebox'))
@@ -38,12 +37,15 @@ def home(soup):
     return home_team
 
 def twenty_four_hr_time(text):
-    time_conversion = {'PM': '12', 'ET': '3', 'AM': '00'}
-    split = text.split()
-    time = split[0].split(':')
-    convert = int(time[0]) + int(time_conversion.get(split[1])) - int(time_conversion.get(split[2]))
-    new_time = str(convert) + ":" + time[1]
-    return new_time
+    if 'TBD' in text.upper():
+        return text
+    else:
+        time_conversion = {'PM': '12', 'ET': '3', 'AM': '00'}
+        split = text.split()
+        time = split[0].split(':')
+        convert = int(time[0]) + int(time_conversion.get(split[1])) - int(time_conversion.get(split[2]))
+        new_time = str(convert) + ":" + time[1]
+        return new_time
     
 def espn_id_link(soup):
     links = soup.find(id=re.compile('gameLinks')).find_all('a')
@@ -55,7 +57,7 @@ def espn_id_link(soup):
 def game_time(soup):
     root = 'http://scores.espn.go.com'
     s = soup.find(id=re.compile('statusLine2Left'))
-    if 'Highlights' in s.text:
+    if 'Highlights' in s.text or not s.text:
         url = root + espn_id_link(soup)
         r = requests.get(url)
         soup1 = BeautifulSoup(r.text)
@@ -82,8 +84,6 @@ team_names = {'Devils': 'NJD', 'Blackhawks': 'CHI', 'Islanders': 'NYI',
               'Kings': 'LAK', 'Capitals': 'WSH', 'Coyotes': 'PHX', 
               'Jets': 'WPG', 'Sharks': 'SJS', 'Flames': 'CGY'}
 
-months = {'January': '01', 'February': '02', 'March': '03', 'April': '04', 'December': '12'}
-
 
 def make_schedule():
     # Will make nhl schedule for games to be played
@@ -92,7 +92,6 @@ def make_schedule():
             url = root_url + str(day)
             r = requests.get(url)
             soup = BeautifulSoup(r.text, 'html5lib')
-            date = extract_date(soup)
             for x in games_for_day(soup):
                 data.append([str(day), team_names.get(away(x)), team_names.get(home(x)), game_time(x), espn_id(x)])
 
